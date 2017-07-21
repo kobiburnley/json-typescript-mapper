@@ -1,4 +1,4 @@
-import {ICustomConverter} from '../../index';
+import {ICustomConverter} from '../../src/index';
 
 const dateConverter: ICustomConverter = {
     fromJson(data: any): any {

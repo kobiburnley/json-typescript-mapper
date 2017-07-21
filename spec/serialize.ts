@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {serialize, JsonProperty} from '../index';
+import {serialize, JsonProperty} from '../src/index';
 import dateConverter from './common/dateconverter';
 
 describe('serialize', function () {

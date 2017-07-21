@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {deserialize, JsonProperty} from '../index';
+import {deserialize, JsonProperty} from '../src/index';
 import dateConverter from './common/dateconverter'
 
 class Student {
@@ -33,7 +33,7 @@ class Address {
 
 
 class Person {
-    @JsonProperty('Name')
+    @JsonProperty({name: "Name", clazz: String})
     name: string;
     @JsonProperty('xing')
     surname: string;
@@ -171,6 +171,21 @@ describe('index()', function () {
         };
         const person = deserialize(Person, json);
         expect(person.name).to.be.equals(void 0);
+    });
+
+    it('simple json object validate string primitive type', function () {
+        let json = {
+            "Name": {
+                name: "Mark"
+            },
+            "xing": "Galea",
+            "age": 30,
+            "AddressArr": [] as Array<any>,
+            "Address": null as any
+        };
+        const person = deserialize(Person, json);
+        expect(person.address).to.be.equals(void 0);
+        expect(typeof person.name).to.be.equal("string");
     });
 
     it('should use a custom converter if available', function () {

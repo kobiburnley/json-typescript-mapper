@@ -40,18 +40,18 @@ export interface IDecoratorMetaData<T> {
  * @return {(target:Object, targetKey:string | symbol)=> void} decorator function
  */
 export declare function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): (target: Object, targetKey: string | symbol) => void;
+export declare type Factory<T> = (...args: any[]) => T;
+export declare type Constructor<T> = new (...args: any[]) => T;
 /**
  * deserialize
  *
  * @function
- * @param {{new():T}} clazz, class type which is going to initialize and hold a mapping json
+ * @param {Factory<T>} Clazz, class type which is going to initialize and hold a mapping json
  * @param {Object} json, input json object which to be mapped
  *
  * @return {T} return mapped object
  */
-export declare function deserialize<T extends IGenericObject>(Clazz: {
-    new (): T;
-}, json: IGenericObject): T;
+export declare function deserialize<T extends IGenericObject>(Clazz: Constructor<T>, json: IGenericObject): T;
 /**
  * Serialize: Creates a ready-for-json-serialization object from the provided model instance.
  * Only @JsonProperty decorated properties in the model instance are processed.
