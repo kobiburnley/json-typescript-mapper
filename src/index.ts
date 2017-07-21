@@ -61,6 +61,9 @@ export function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): Prop
   return Reflect.metadata(JSON_META_DATA_KEY, decoratorMetaData);
 }
 
+// using this to make typescript emit design type metadata decorators
+export const dummyDecorator: PropertyDecorator = (target, propertyKey) => void 0
+
 /**
  * getClazz
  *

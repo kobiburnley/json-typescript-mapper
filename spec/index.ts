@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {deserialize, JsonProperty} from '../src/index';
+import {deserialize, dummyDecorator, JsonProperty} from '../src/index';
 import dateConverter from './common/dateconverter'
 
 class Student {
@@ -19,7 +19,7 @@ class Address {
     firstLine: string;
     @JsonProperty('second-line')
     secondLine: string;
-    @JsonProperty()
+    @dummyDecorator
     student: Student;
     city: string;
 
@@ -38,9 +38,9 @@ class Person {
     @JsonProperty('xing')
     surname: string;
     age: number;
-    @JsonProperty({clazz: Address, name: 'AddressArr'})
+    @JsonProperty({name: 'AddressArr'})
     addressArr: Array<Address>;
-    @JsonProperty({clazz: Address, name: 'Address'})
+    @JsonProperty({name: 'Address'})
     address: Address;
 
     constructor() {
