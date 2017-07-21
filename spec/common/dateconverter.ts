@@ -3,10 +3,6 @@ import {ICustomConverter} from '../../src/index';
 const dateConverter: ICustomConverter = {
     fromJson(data: any): any {
         return new Date(data);
-    },
-
-    toJson(data: any): any {
-        return 'some-date';
     }
 };
 

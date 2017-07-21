@@ -33,13 +33,13 @@ class Address {
 
 
 class Person {
-    @JsonProperty({name: "Name", clazz: String})
+    @JsonProperty({name: "Name"})
     name: string;
     @JsonProperty('xing')
     surname: string;
     age: number;
     @JsonProperty({clazz: Address, name: 'AddressArr'})
-    addressArr: Address[];
+    addressArr: Array<Address>;
     @JsonProperty({clazz: Address, name: 'Address'})
     address: Address;
 

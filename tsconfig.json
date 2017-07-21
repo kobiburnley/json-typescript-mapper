@@ -6,10 +6,12 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noImplicitAny": true,
-    "outDir": "lib",
+    "outDir": "build",
     "declaration": true
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "lib",
+    "build"
   ]
 }

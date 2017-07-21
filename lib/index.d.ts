@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+export declare type Constructor<T> = new (...args: any[]) => T;
 /**
  * provide interface to indicate the object is allowed to be traversed
  *
@@ -14,7 +15,6 @@ export interface IGenericObject {
  */
 export interface ICustomConverter {
     fromJson(data: any): any;
-    toJson(data: any): any;
 }
 /**
  * IDecoratorMetaData<T>
@@ -39,24 +39,26 @@ export interface IDecoratorMetaData<T> {
  * @property {IDecoratorMetaData<T>|string} metadata, encapsulate it to DecoratorMetaData for standard use
  * @return {(target:Object, targetKey:string | symbol)=> void} decorator function
  */
-export declare function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): (target: Object, targetKey: string | symbol) => void;
-export declare type Factory<T> = (...args: any[]) => T;
-export declare type Constructor<T> = new (...args: any[]) => T;
+export declare function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): PropertyDecorator;
+/**
+ * getClazz
+ *
+ * @function
+ * @property {any} target object
+ * @property {string} propertyKey, used as target property
+ * @return {Function} Function/Class indicate the target property type
+ * @description Used for type checking, if it is not primitive type, loop inside recursively
+ */
+export declare function getClazz<T>(target: T, propertyKey: string): {
+    new (): T;
+};
 /**
  * deserialize
  *
  * @function
- * @param {Factory<T>} Clazz, class type which is going to initialize and hold a mapping json
+ * @param {Constructor<T>} Clazz, class type which is going to initialize and hold a mapping json
  * @param {Object} json, input json object which to be mapped
  *
  * @return {T} return mapped object
  */
 export declare function deserialize<T extends IGenericObject>(Clazz: Constructor<T>, json: IGenericObject): T;
-/**
- * Serialize: Creates a ready-for-json-serialization object from the provided model instance.
- * Only @JsonProperty decorated properties in the model instance are processed.
- *
- * @param instance an instance of a model class
- * @returns {any} an object ready to be serialized to JSON
- */
-export declare function serialize(instance: any): any;

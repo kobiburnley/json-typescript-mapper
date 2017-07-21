@@ -1,16 +1,7 @@
-export function isTargetType(val:any, type:"object" | "string"):boolean {
-    return typeof val === type;
+export function isPrimitiveClass(obj: any): boolean {
+  return obj === String || obj === Number || obj === Boolean
 }
 
-export function isPrimitiveOrPrimitiveClass(obj:any):boolean {
-    return !!(['string', 'boolean', 'number'].indexOf((typeof obj)) > -1 || (obj instanceof String || obj === String ||
-    obj instanceof Number || obj === Number ||
-    obj instanceof Boolean || obj === Boolean));
-}
-
-export function isArrayOrArrayClass(clazz:Function):boolean {
-    if (clazz === Array) {
-        return true;
-    }
-    return Object.prototype.toString.call(clazz) === '[object Array]'
+export function isArrayClass(clazz: Function): boolean {
+  return (clazz != null && clazz.prototype != null) && (clazz === Array || clazz.prototype instanceof Array)
 }

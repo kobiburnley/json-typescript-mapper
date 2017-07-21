@@ -1,5 +1,12 @@
 import 'reflect-metadata';
-import {isTargetType, isPrimitiveOrPrimitiveClass, isArrayOrArrayClass} from './libs/utils';
+import {isArrayClass, isPrimitiveClass} from './libs/utils';
+export type Constructor<T> = new (...args: any[]) => T
+// const primitivesMap: any = {
+//   String: "string",
+//   Number: "number",
+//   Boolean: "boolean"
+// }
+
 
 /**
  * provide interface to indicate the object is allowed to be traversed
@@ -10,12 +17,6 @@ export interface IGenericObject {
   [key: string]: any;
 }
 
-
-/**
- * Decorator variable name
- *
- * @const
- */
 const JSON_META_DATA_KEY = 'JsonProperty';
 
 /**
@@ -25,7 +26,6 @@ const JSON_META_DATA_KEY = 'JsonProperty';
  */
 export interface ICustomConverter {
   fromJson(data: any): any;
-  toJson(data: any): any;
 }
 
 /**
@@ -44,41 +44,22 @@ export interface IDecoratorMetaData<T> {
 }
 
 /**
- * DecoratorMetaData
- * Model used for decoration parameters
- *
- * @class
- * @property {string} name, indicate which json property needed to map
- * @property {string} clazz, if the target is not primitive type, map it to corresponding class
- */
-class DecoratorMetaData<T> {
-  constructor(public name?: string, public clazz?: { new(): T }) {
-  }
-}
-
-/**
  * JsonProperty
  *
  * @function
  * @property {IDecoratorMetaData<T>|string} metadata, encapsulate it to DecoratorMetaData for standard use
  * @return {(target:Object, targetKey:string | symbol)=> void} decorator function
  */
-export function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): (target: Object, targetKey: string | symbol) => void {
+export function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): PropertyDecorator {
   let decoratorMetaData: IDecoratorMetaData<T>;
-
-  if (isTargetType(metadata, 'string')) {
-    decoratorMetaData = new DecoratorMetaData<T>(metadata as string);
+  if (typeof metadata === "string") {
+    decoratorMetaData = {name: metadata as string}
   }
-  else if (isTargetType(metadata, 'object')) {
+  else if (typeof metadata === "object") {
     decoratorMetaData = metadata as IDecoratorMetaData<T>;
   }
-  else {
-    throw new Error('index.ts: meta data in Json property is undefined. meta data: ' + metadata)
-  }
-
   return Reflect.metadata(JSON_META_DATA_KEY, decoratorMetaData);
 }
-
 
 /**
  * getClazz
@@ -89,7 +70,7 @@ export function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): (tar
  * @return {Function} Function/Class indicate the target property type
  * @description Used for type checking, if it is not primitive type, loop inside recursively
  */
-function getClazz<T>(target: T, propertyKey: string): { new(): T } {
+export function getClazz<T>(target: T, propertyKey: string): Constructor<T> {
   return Reflect.getMetadata('design:type', target, propertyKey)
 }
 
@@ -106,34 +87,17 @@ function getJsonProperty<T>(target: any, propertyKey: string): IDecoratorMetaDat
   return Reflect.getMetadata(JSON_META_DATA_KEY, target, propertyKey);
 }
 
-/**
- * hasAnyNullOrUndefined
- *
- * @function
- * @property {...args:any[]} any arguments
- * @return {IDecoratorMetaData<T>} check if any arguments is null or undefined
- */
-function hasAnyNullOrUndefined(...args: any[]) {
-  return args.some((arg: any) => arg === null || arg === undefined);
-}
 
+function mapFromJson<T, E>(clazz: Constructor<T>, innerJson: IGenericObject, genericType: Constructor<E>): any {
+  if (innerJson == null) {
+    return void 0
+  }
 
-function mapFromJson<T>(decoratorMetadata: IDecoratorMetaData<any>, instance: T, json: IGenericObject, key: any): any {
-  /**
-   * if decorator name is not found, use target property key as decorator name. It means mapping it directly
-   */
-  let decoratorName = decoratorMetadata.name || key;
-  let innerJson: any = json ? json[decoratorName] : undefined;
-  let clazz = getClazz(instance, key);
-  if (isArrayOrArrayClass(clazz)) {
-    let metadata = getJsonProperty(instance, key);
-    if (metadata && metadata.clazz || isPrimitiveOrPrimitiveClass(clazz)) {
-      if (innerJson && isArrayOrArrayClass(innerJson)) {
-        return innerJson.map(
-          (item: any) => deserialize(metadata.clazz, item)
-        );
-      }
-      return;
+  if (isArrayClass(clazz)) {
+    if (genericType) {
+      return innerJson.map(
+        (item: any) => deserialize(genericType, item)
+      );
     } else {
       return innerJson;
     }
@@ -143,23 +107,14 @@ function mapFromJson<T>(decoratorMetadata: IDecoratorMetaData<any>, instance: T,
     return deserialize(clazz, innerJson);
   }
 
-  return json ? json[decoratorName] : undefined;
-}
-
-
-export type Factory<T> = (...args: any[]) => T
-export type Constructor<T> = new (...args: any[]) => T
-const primitivesMap: any = {
-  String: "string",
-  Number: "number",
-  Boolean: "boolean"
+  return innerJson
 }
 
 /**
  * deserialize
  *
  * @function
- * @param {Factory<T>} Clazz, class type which is going to initialize and hold a mapping json
+ * @param {Constructor<T>} Clazz, class type which is going to initialize and hold a mapping json
  * @param {Object} json, input json object which to be mapped
  *
  * @return {T} return mapped object
@@ -168,96 +123,38 @@ export function deserialize<T extends IGenericObject>(Clazz: Constructor<T>, jso
   /**
    * As it is a recursive function, ignore any arguments that are unset
    */
-  if (hasAnyNullOrUndefined(Clazz, json)) {
+  if (Clazz == null || json == null) {
     return void 0;
   }
 
-  // support for primitive Constructors to ensure primitive types values in targeted class
-  if (isPrimitiveOrPrimitiveClass(Clazz)) {
+  // primitive class
+  if (isPrimitiveClass(Clazz)) {
     const PrimitiveFactory = Clazz as any
-    if (typeof json !== primitivesMap[PrimitiveFactory.name]) {
-      // maybe throw exception here
-    }
+    // if (typeof json !== primitivesMap[PrimitiveFactory.name]) {
+    // maybe throw here
+    // }
     return PrimitiveFactory(json)
   }
 
-  /**
-   * Prevent non-json continue
-   */
-  if (!isTargetType(json, 'object')) {
+  if (typeof json !== "object") {
     return void 0;
   }
 
-  /**
-   * init root class to contain json
-   */
+  // if (isArrayClass(Clazz)) {
+  //   return mapFromJson(genericType, json, Clazz)
+  // }
+
   let instance = new Clazz();
-
   Object.keys(instance).forEach((key: string) => {
-    /**
-     * get decoratorMetaData, structure: { name?:string, clazz?:{ new():T } }
-     */
-    let decoratorMetaData = getJsonProperty(instance, key);
-
-    /**
-     * pass value to instance
-     */
-    if (decoratorMetaData && decoratorMetaData.customConverter) {
-      instance[key] = decoratorMetaData.customConverter.fromJson(json[decoratorMetaData.name || key]);
+    // default name = key, if not defined manually
+    const decoratorMetaData = {name: key, ...getJsonProperty(instance, key)}
+    const innerJson = json[decoratorMetaData.name]
+    if (decoratorMetaData.customConverter) {
+      instance[key] = decoratorMetaData.customConverter.fromJson(innerJson);
     } else {
-      instance[key] = decoratorMetaData ? mapFromJson(decoratorMetaData, instance, json, key) : json[key];
+      instance[key] = mapFromJson(getClazz(instance, key), innerJson, decoratorMetaData.clazz)
     }
-
   });
 
   return instance;
-}
-
-/**
- * Serialize: Creates a ready-for-json-serialization object from the provided model instance.
- * Only @JsonProperty decorated properties in the model instance are processed.
- *
- * @param instance an instance of a model class
- * @returns {any} an object ready to be serialized to JSON
- */
-export function serialize(instance: any): any {
-
-  if (!isTargetType(instance, 'object') || isArrayOrArrayClass(instance)) {
-    return instance;
-  }
-
-  const obj: any = {};
-  Object.keys(instance).forEach(key => {
-    const metadata = getJsonProperty(instance, key);
-    obj[metadata && metadata.name ? metadata.name : key] = serializeProperty(metadata, instance[key]);
-  });
-  return obj;
-}
-
-/**
- * Prepare a single property to be serialized to JSON.
- *
- * @param metadata
- * @param prop
- * @returns {any}
- */
-function serializeProperty(metadata: IDecoratorMetaData<any>, prop: any): any {
-
-  if (!metadata || metadata.excludeToJson === true) {
-    return;
-  }
-
-  if (metadata.customConverter) {
-    return metadata.customConverter.toJson(prop);
-  }
-
-  if (!metadata.clazz) {
-    return prop;
-  }
-
-  if (isArrayOrArrayClass(prop)) {
-    return prop.map((propItem: any) => serialize(propItem));
-  }
-
-  return serialize(prop);
 }
