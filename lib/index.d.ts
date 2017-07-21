@@ -26,9 +26,7 @@ export interface ICustomConverter {
  */
 export interface IDecoratorMetaData<T> {
     name?: string;
-    clazz?: {
-        new (): T;
-    };
+    clazz?: Constructor<T>;
     customConverter?: ICustomConverter;
     excludeToJson?: boolean;
 }
@@ -40,6 +38,7 @@ export interface IDecoratorMetaData<T> {
  * @return {(target:Object, targetKey:string | symbol)=> void} decorator function
  */
 export declare function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | string): PropertyDecorator;
+export declare const dummyDecorator: PropertyDecorator;
 /**
  * getClazz
  *
@@ -49,9 +48,7 @@ export declare function JsonProperty<T>(metadata?: IDecoratorMetaData<T> | strin
  * @return {Function} Function/Class indicate the target property type
  * @description Used for type checking, if it is not primitive type, loop inside recursively
  */
-export declare function getClazz<T>(target: T, propertyKey: string): {
-    new (): T;
-};
+export declare function getClazz<T>(target: T, propertyKey: string): Constructor<T>;
 /**
  * deserialize
  *
