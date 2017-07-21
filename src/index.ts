@@ -38,7 +38,7 @@ export interface ICustomConverter {
  */
 export interface IDecoratorMetaData<T> {
   name?: string,
-  clazz?: { new(): T },
+  clazz?: Constructor<T>,
   customConverter?: ICustomConverter,
   excludeToJson?: boolean
 }

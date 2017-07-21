@@ -19,7 +19,7 @@ class Address {
     firstLine: string;
     @JsonProperty('second-line')
     secondLine: string;
-    @JsonProperty({clazz: Student})
+    @JsonProperty()
     student: Student;
     city: string;
 
