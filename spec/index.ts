@@ -53,6 +53,7 @@ class Person {
 }
 
 describe('index()', function () {
+    this.timeout(10000)
     it('simple json object #1', function () {
         let json = {
             "Name": "Mark",
@@ -64,8 +65,21 @@ describe('index()', function () {
         const person = deserialize(Person, json);
         expect(person.address).to.be.equals(void 0);
         expect(person.name).to.be.equal("Mark");
+        expect(person.age).to.be.equal(30);
         expect(person.surname).to.be.equal("Galea");
         expect(person.addressArr).to.be.empty;
+    });
+
+    it('simple json object falsey values', function () {
+        let json = {
+            "Name": "",
+            "age": 0,
+            "AddressArr": [] as Array<any>,
+            "Address": null as any
+        };
+        const person = deserialize(Person, json);
+        expect(person.age).to.be.equals(0)
+        expect(person.name).to.be.equals("")
     });
 
     it('simple json object #2', function () {
